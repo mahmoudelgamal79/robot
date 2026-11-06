@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Smart Security Patrol Car v2</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-grad"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <div class="app">
+    <header class="glass">
+      <div class="brand">
+        <div class="logo"><span class="logo-inner"></span></div>
+        <div class="brand-text">
+          <h1>AI Smart Security Patrol Car</h1>
+          <small id="robotName">PatrolCar-01 · v2</small>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="mode-toggle">
+          <button id="modeManual" class="active" data-mode="manual">MANUAL</button>
+          <button id="modeAuto" data-mode="auto">AUTO</button>
+          <button id="modeRescue" data-mode="rescue" class="danger">RESCUE</button>
+          <button id="modeIdle" data-mode="idle">IDLE</button>
+        </div>
+        <div class="status-pill">
+          <span class="dot" id="sysDot"></span>
+          <span id="sysStatus">CONNECTING...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hazard banner -->
+    <div class="hazard-banner" id="hazardBanner"></div>
+
+    <!-- Camera + telemetry -->
+    <div class="grid g2">
+      <section class="card glass" id="camCard">
+        <header class="card-head">
+          <h3><span class="ic"></span>Live Camera Feed</h3>
+          <div class="card-actions">
+            <span class="badge" id="camBadge">CAM OFFLINE</span>
+          </div>
+        </header>
+        <div class="cam-wrap">
+          <img id="camStream" alt="Live Stream" src="" />
+          <div class="cam-overlay">
+            <span id="camInfo">--</span>
+            <span class="rec">REC</span>
+          </div>
+          <div class="scan-line"></div>
+        </div>
+        <div class="card-actions row-gap">
+          <button class="btn" id="btnSnapshot">📸 Snapshot</button>
+          <button class="btn" id="btnRestartCam">🔄 Restart Cam</button>
+          <button class="btn warn" id="btnTestAlarm">⚠ Test Alarm</button>
+          <button class="btn danger" id="btnEStop">✕ EMERGENCY STOP</button>
+          <button class="btn danger" id="btnRestart">↻ Restart Robot</button>
+        </div>
+      </section>
+
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>Core Telemetry</h3></header>
+        <div class="stats c2">
+          <div class="stat"><div class="lbl">Battery</div><div class="val"><span id="batPct">--</span><small>(<span id="batV">--</span>V)</small></div><div class="bar"><i id="batBar" style="width:0%"></i></div></div>
+          <div class="stat"><div class="lbl">Distance</div><div class="val"><span id="dist">--</span><small>cm</small></div><div class="bar"><i id="distBar" style="width:0%"></i></div></div>
+          <div class="stat"><div class="lbl">Speed</div><div class="val"><span id="spd">--</span><small>/255</small></div></div>
+          <div class="stat"><div class="lbl">Mode</div><div class="val" id="mode">--</div></div>
+          <div class="stat"><div class="lbl">Uptime</div><div class="val" id="uptime">--</div></div>
+          <div class="stat"><div class="lbl">Alarm</div><div class="val" id="alarmLvl">--</div></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Environmental sensors -->
+    <div class="grid g3">
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>DHT22 Temp/Humidity</h3></header>
+        <div class="stats c2">
+          <div class="stat"><div class="lbl">Temperature</div><div class="val" id="temp">--<small>°C</small></div></div>
+          <div class="stat"><div class="lbl">Humidity</div><div class="val" id="hum">--<small>%</small></div></div>
+        </div>
+      </section>
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>MQ-9 Gas Sensor</h3></header>
+        <div class="stat"><div class="lbl">Gas Level</div><div class="val"><span id="gasPct">--</span><small>%</small></div><div class="bar" id="gasBar"><i style="width:0%"></i></div></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Raw: <span id="gasRaw">--</span> · <span id="gasStatus">OK</span></div>
+      </section>
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>Flame Sensor</h3></header>
+        <div class="stat"><div class="lbl">Flame Level</div><div class="val"><span id="flamePct">--</span><small>%</small></div><div class="bar" id="flameBar"><i style="width:0%"></i></div></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Raw: <span id="flameRaw">--</span> · <span id="flameStatus">CLEAR</span></div>
+      </section>
+    </div>
+
+    <!-- Motion + GPS + GSM -->
+    <div class="grid g3">
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>Motion & Sound</h3></header>
+        <div class="stats c2">
+          <div class="stat"><div class="lbl">PIR Motion</div><div class="val" id="motionVal">--</div></div>
+          <div class="stat"><div class="lbl">Sound Events/s</div><div class="val" id="soundVal">--</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Motion count: <span id="motionCount">0</span></div>
+      </section>
+
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>GPS Location (Neo-6M)</h3></header>
+        <div class="stat"><div class="lbl">Latitude</div><div class="gps-coord" id="gpsLat">--</div></div>
+        <div class="stat"><div class="lbl">Longitude</div><div class="gps-coord" id="gpsLon">--</div></div>
+        <div class="stats c2">
+          <div class="stat"><div class="lbl">Sats</div><div class="val" id="gpsSats">--</div></div>
+          <div class="stat"><div class="lbl">Speed</div><div class="val"><span id="gpsSpd">--</span><small>km/h</small></div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted)">UTC: <span id="gpsTime">--</span> · <span id="gpsDate">--</span></div>
+        <div style="margin-top:8px"><a id="gpsMapLink" href="#" target="_blank" class="btn">Open in Maps</a></div>
+      </section>
+
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>GSM / SMS (SIM800L)</h3></header>
+        <div class="stats c2">
+          <div class="stat"><div class="lbl">Module</div><div class="val" id="gsmReady">--</div></div>
+          <div class="stat"><div class="lbl">Network</div><div class="val" id="gsmReg">--</div></div>
+          <div class="stat"><div class="lbl">Signal</div><div class="val"><span id="gsmSig">--</span><small>/31</small></div></div>
+          <div class="stat"><div class="lbl">Alert Phone</div><div class="val small-val" id="alertPhone">--</div></div>
+        </div>
+        <div class="input" style="margin-top:10px">
+          <label>Send test SMS to:</label>
+          <input id="smsPhone" type="text" placeholder="+201234567890" />
+          <button class="btn primary" id="btnSendSms" style="margin-top:6px">Send SMS</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Manual controls + AI -->
+    <div class="grid g2">
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>Manual Controls</h3><span class="muted small">Arrows / WASD</span></header>
+        <div class="controls-grid">
+          <div></div>
+          <button class="btn primary glow" data-cmd="forward">▲ FWD</button>
+          <div></div>
+          <button class="btn glow" data-cmd="left">◀ LEFT</button>
+          <button class="btn danger glow" data-cmd="stop">■ STOP</button>
+          <button class="btn glow" data-cmd="right">RIGHT ▶</button>
+          <div></div>
+          <button class="btn primary glow" data-cmd="backward">▼ BACK</button>
+          <div></div>
+        </div>
+        <div class="speed-row">
+          <label>Speed: <strong id="spdVal">180</strong></label>
+          <input type="range" min="70" max="255" value="180" id="spdSlider" />
+        </div>
+      </section>
+
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>AI Detection</h3><span class="badge" id="aiBadge">AI IDLE</span></header>
+        <div class="stats c2">
+          <div class="stat"><div class="lbl">Faces Total</div><div class="val" id="aiFaces">0</div></div>
+          <div class="stat"><div class="lbl">Unknown</div><div class="val" id="aiUnknown">0</div></div>
+          <div class="stat"><div class="lbl">FPS</div><div class="val" id="aiFps">0</div></div>
+          <div class="stat"><div class="lbl">Confidence</div><div class="val" id="aiConf">--</div></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Logs + Settings -->
+    <div class="grid g2">
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>System Logs</h3></header>
+        <div class="logs" id="logs"></div>
+      </section>
+
+      <section class="card glass">
+        <header class="card-head"><h3><span class="ic"></span>Configuration</h3></header>
+        <div class="settings-grid">
+          <div class="input"><label>WiFi SSID</label><input id="setSsid" type="text" /></div>
+          <div class="input"><label>WiFi Password</label><input id="setPass" type="text" /></div>
+          <div class="input"><label>Robot Name</label><input id="setName" type="text" /></div>
+          <div class="input"><label>Speed (70-255)</label><input id="setSpeed" type="number" min="70" max="255" /></div>
+          <div class="input"><label>Camera IP</label><input id="setCamHost" type="text" placeholder="192.168.4.2" /></div>
+          <div class="input"><label>Camera Port</label><input id="setCamPort" type="number" placeholder="81" /></div>
+          <div class="input"><label>Camera Resolution</label><select id="setCamRes"><option value="0">LOW</option><option value="1">QVGA</option><option value="2" selected>VGA</option><option value="3">HD</option><option value="4">SXGA</option></select></div>
+          <div class="input"><label>Face Confidence (0-1)</label><input id="setFaceConf" type="number" step="0.05" min="0" max="1" /></div>
+          <div class="input"><label>Warning Distance (cm)</label><input id="setWarn" type="number" min="5" max="100" /></div>
+          <div class="input"><label>Danger Distance (cm)</label><input id="setDanger" type="number" min="3" max="80" /></div>
+          <div class="input"><label>Alarm Sensitivity</label><input id="setAlarmSens" type="number" min="1" max="10" /></div>
+          <div class="input"><label>SMS Alert Phone</label><input id="setAlertPhone" type="text" placeholder="+201234567890" /></div>
+          <div class="input btn-cell" style="grid-column:span 2"><button class="btn primary" id="btnSaveSettings" style="width:100%">💾 SAVE SETTINGS</button></div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <span>AI Smart Security Patrol Car · v2.0.0</span>
+      <span class="muted small" id="latency">--</span>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>
